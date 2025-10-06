@@ -1,14 +1,14 @@
 # Modelización numérica, IA y machine learning aplicado a la volcanología
-***
 
-Prácticas del módulo de modelización numérica del [curso][web]:
+Prácticas correspondientes al módulo de _modelización numérica_ del [curso][web]:
 
 | __Curso internacional de volcanología__    |
 | :----------------------------------------: |
-| Olot (La Garrotxa) - La Palma (1a edición) |
-| Del 20 de octubre al 1 de noviembre de 2025|
+| Olot (La Garrotxa) - La Palma              |
+| 20 de octubre al 1 de noviembre de 2025    |
+| 1a edición                                 |
 
-<img src="figs/cover.jpg" width="400">
+<img src="figs/cover.jpg" width="450">
 
 ## Contenido
 
