@@ -8,9 +8,9 @@ from torch.utils.data import Dataset
 #######################
 class Standardize:
     def __init__(self, mean, std, eps=1e-6):
-        self.mean = mean
-        self.std = std
-        self.eps = eps
+        self.mean = torch.from_numpy(mean).float()
+        self.std  = torch.from_numpy(std).float()
+        self.eps  = eps
 
     def __call__(self, x):
         return (x - self.mean) / (self.std + self.eps)
@@ -32,6 +32,28 @@ class MinMaxScale:
 ################
 ### Datasets ###
 ################
+
+# Dataset for deposit thickness
+class ThicknessDataset(Dataset):
+    def __init__(self, X, y, transform = None):
+        """
+        X: numpy array (N, 2) with [lat, lon]
+        y: numpy array (N,)
+        """
+        self.x = torch.from_numpy(X).float()
+        self.y = torch.from_numpy(y).long()
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        x = self.x[idx]
+        if self.transform:
+            x = self.transform(x)
+        return x, self.y[idx]
+
+# Dataset for ensemble forecasts
 class EnsembleDataset(Dataset):
     def __init__(self, data_array, transform = None):
         self.X = data_array.values
