@@ -1,15 +1,14 @@
 # Modelización numérica, IA y machine learning aplicado a la volcanología
 ***
 
-![](figs/cover.jpg)
+Prácticas del módulo de modelización numérica del [curso][web]:
 
-Prácticas del módulo de modelización numérica del curso:
+| __Curso internacional de volcanología__    |
+| :----------------------------------------: |
+| Olot (La Garrotxa) - La Palma (1a edición) |
+| Del 20 de octubre al 1 de noviembre de 2025|
 
-__Curso internacional de volcanología__
-
-Olot (La Garrotxa) - La Palma (1a edición)
-
-Del 20 de octubre al 1 de noviembre de 2025
+<img src="figs/cover.jpg" width="400">
 
 ## Contenido
 
@@ -38,3 +37,4 @@ La Palma tras la erupción de 2021.
 
 ### 4. Autoencoders applied to an ensemble of numerical simulations
 
+[web]: https://espaicrater.com/es/cursovolcanologia/
