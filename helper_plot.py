@@ -6,8 +6,6 @@ import cartopy.feature as cfeature
 
 import torch
 
-plt.rcParams.update({'font.size': 8})
-
 def create_map(projection = crs.PlateCarree()):
     fig, ax = plt.subplots( subplot_kw={'projection': projection} )
     ###
@@ -42,6 +40,8 @@ def create_map(projection = crs.PlateCarree()):
     gl.top_labels    = False
     gl.right_labels  = False
     gl.ylabel_style  = {'rotation': 90}
+
+    fig.tight_layout()
     
     return fig, ax
 
@@ -87,4 +87,4 @@ def plot_decision_regions(model, transform):
     cbar.set_ticks([0,1,2])
     cbar.set_ticklabels(['Low', 'Moderate', 'High'])
 
-    return ax
+    return fig, ax
