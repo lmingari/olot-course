@@ -5,11 +5,11 @@
 
 Material para el módulo de _modelización numérica_ del [curso][web]:
 
-| __Curso internacional de volcanología__    |
-| :----------------------------------------: |
-| Olot (La Garrotxa) - La Palma              |
-| 20 de octubre al 1 de noviembre de 2025    |
-| 1a edición                                 |
+| __Curso internacional de volcanología__    | This site |
+| :----------------------------------------: | :-------: |
+| Olot (La Garrotxa) - La Palma              | ![](figs/qr.svg) |
+| 20 de octubre al 1 de noviembre de 2025    | |
+| _1a edición_                               | |
 
 ## Teóricas
 
