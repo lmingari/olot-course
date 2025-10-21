@@ -16,11 +16,11 @@ Material para el módulo de _modelización numérica_ del [curso][web]:
 
 | Teórica | Enlace |
 | :------ | ------ |
-| Introducción                        | [![PDF][pdf-icon]][teorica-intro] |
-| 1. Modelos                          | [![PDF][pdf-icon]][teorica1] |
-| 2. El modelo FALL3D                 | [![PDF][pdf-icon]][teorica2] |
-| 3. Machine Learning en volcanología | [![PDF][pdf-icon]][teorica3] |
-| 4. Redes neuronales                 | [![PDF][pdf-icon]][teorica4] |
+| Introducción                         | [![PDF][pdf-icon]][teorica-intro] |
+| 1.1 Modelos                          | [![PDF][pdf-icon]][teorica11] |
+| 1.2 Machine Learning en volcanología | [![PDF][pdf-icon]][teorica12] |
+| 2. El modelo FALL3D                  | [![PDF][pdf-icon]][teorica2] |
+| 3. Redes neuronales                  | [![PDF][pdf-icon]][teorica3] |
 
 ## Prácticas
 
@@ -110,11 +110,11 @@ pip install -r requirements.txt
 ```
 
 [web]: https://espaicrater.com/es/cursovolcanologia/
-[teorica-intro]: https://saco.csic.es/s/82DMHtD9Kt2LAXd/download/Introducci%C3%B3n.pdf
-[teorica1]: https://saco.csic.es/s/W4Jf7Zc35bKDDoL/download/Teoria_1_Modelos.pdf
-[teorica2]: https://saco.csic.es/s/sqsf7JJxbL9BocE/download/Teoria_2_FALL3D%20model.pdf
-[teorica3]: https://saco.csic.es/s/JS8k3GAkHR95qf5/download/Teoria_3_ML%20en%20volcanologia.pdf
-[teorica4]: https://saco.csic.es/s/ZzqMCwCpoGZnQak/download/Teoria_4_Redes%20neuronales.pdf
+[teorica-intro]: https://saco.csic.es/s/82DMHtD9Kt2LAXd
+[teorica11]: https://saco.csic.es/s/Kodfn2bnXmWjAY9
+[teorica12]: https://saco.csic.es/s/xY2Cynfw6sztRSe
+[teorica2]: https://saco.csic.es/s/LqKEF3FDsKszWBf
+[teorica3]: https://saco.csic.es/s/qoar9dr3pNqnqS3
 [pdf-icon]: figs/PDF_icon.svg
 [colab-launch]: https://img.shields.io/badge/Google%20Colab-Launch-blue.svg
 [colab-badge]: https://colab.research.google.com/assets/colab-badge.svg
