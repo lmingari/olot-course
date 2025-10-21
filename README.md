@@ -16,11 +16,11 @@ Material para el módulo de _modelización numérica_ del [curso][web]:
 
 | Teórica | Enlace |
 | :------ | ------ |
-| Introducción                         | [![PDF][pdf-icon]][teorica-intro] |
-| 1.1 Modelos                          | [![PDF][pdf-icon]][teorica11] |
-| 1.2 Machine Learning en volcanología | [![PDF][pdf-icon]][teorica12] |
-| 2. El modelo FALL3D                  | [![PDF][pdf-icon]][teorica2] |
-| 3. Redes neuronales                  | [![PDF][pdf-icon]][teorica3] |
+| Introducción                           | [![PDF][pdf-icon]][teorica-intro] |
+| 1.1 Modelos numéricos                  | [![PDF][pdf-icon]][teorica11] |
+| 1.2 Machine Learning en volcanología   | [![PDF][pdf-icon]][teorica12] |
+| 2. El modelo FALL3D                    | [![PDF][pdf-icon]][teorica2] |
+| 3. Introducción a las redes neuronales | [![PDF][pdf-icon]][teorica3] |
 
 ## Prácticas
 
