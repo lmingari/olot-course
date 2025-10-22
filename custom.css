@@ -1,0 +1,130 @@
+/* --- presentation_lab_v2.css --- */
+/* For a JupyterLab (v4+) presentation */
+/* v2: Increased specificity for outputs and markdown */
+
+/* --- General Content Area --- */
+.jp-Notebook {
+    font-size: 22px;
+    line-height: 1.5;
+}
+
+/* --- Rendered Markdown Cells --- */
+
+/* Targets the container for rendered text/markdown */
+.jp-Notebook .jp-RenderedMarkdown,
+.jp-Notebook .text_cell_render {
+    font-size: 24px !important;   /* Large font for paragraphs */
+    line-height: 1.6 !important;  /* Extra line spacing for text */
+}
+
+/* Make headings significantly larger */
+.jp-Notebook .jp-RenderedMarkdown h1,
+.jp-Notebook .text_cell_render h1 {
+    font-size: 40px;
+    font-weight: 600;
+    text-align: center;
+    color: #753123;
+}
+
+.jp-Notebook .jp-RenderedMarkdown h2,
+.jp-Notebook .text_cell_render h2 {
+    font-size: 34px;
+    font-weight: 600;
+    text-align: right;
+    color: #753123;
+}
+
+.jp-Notebook .jp-RenderedMarkdown h3,
+.jp-Notebook .text_cell_render h3 {
+    font-size: 28px;
+}
+
+/* Make lists easier to read */
+.jp-Notebook .jp-RenderedMarkdown li,
+.jp-Notebook .text_cell_render li {
+    margin-bottom: 12px; /* Space out list items */
+}
+
+.jp-Notebook .jp-RenderedMarkdown code,
+.jp-Notebook .text_cell_render code {
+    font-size: 20px; /* Make inline code snippets large too */
+    background-color: #f0f0f0;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+
+/* --- Code Input Cells (Modern JupyterLab 4+) --- */
+
+/* Targets the CodeMirror 6 editor wrapper */
+.jp-Notebook .jp-CodeCell .jp-Editor .cm-editor {
+    font-family: 'Sans-serif', 'Menlo', 'Courier New', monospace;
+    font-size: 22px; /* Large font for code! */
+}
+
+/* Targets the actual text content within the editor */
+.jp-Notebook .jp-CodeCell .jp-Editor .cm-content {
+    line-height: 1.5; /* Spacing for code lines */
+}
+
+/* Targets the line numbers gutter */
+.jp-Notebook .jp-CodeCell .jp-Editor .cm-gutters {
+    font-size: 18px; /* Make gutters readable */
+}
+
+
+/* --- Code Output Area --- */
+
+/* Targets the general output area below a code cell */
+.jp-Notebook .jp-OutputArea,
+.jp-Notebook .output_area {
+    font-size: 22px; /* Make all output text large */
+    line-height: 1.5;
+}
+
+/* Targets standard text output (from print() statements) */
+.jp-Notebook .jp-OutputArea-output .jp-RenderedText pre,
+.jp-Notebook .output_area pre {
+    font-size: 22px !important; /* Force large font */
+    font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+}
+
+/* Make error messages large and clear */
+.jp-Notebook .jp-OutputArea-stderr,
+.jp-Notebook .output_stderr {
+    background-color: #fff0f0; /* Light red background for errors */
+}
+.jp-Notebook .jp-OutputArea-stderr pre,
+.jp-Notebook .output_stderr pre {
+    font-size: 20px !important; /* Force large font */
+    color: #cc0000; /* Dark red text for errors */
+}
+
+
+/* --- Pandas DataFrames --- */
+
+.jp-Notebook .dataframe {
+    font-size: 18px;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+.jp-Notebook .dataframe th {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 14px 18px;
+    background-color: #f4f4f4;
+    border: 1px solid #ccc;
+    text-align: left;
+}
+
+.jp-Notebook .dataframe td {
+    padding: 12px 18px;
+    border: 1px solid #ddd;
+}
+
+/* Block Quotes */
+.jp-RenderedHTMLCommon blockquote {
+    background-color: #FFE5E0;
+    border-left: 6px solid #753123 !important;
+}
