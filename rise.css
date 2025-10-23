@@ -1,0 +1,13 @@
+.rise-enabled .jp-RenderedHTMLCommon {
+  font-size: 2rem;
+}
+
+/* Increase font size for code cells */
+.rise-enabled .cm-editor {
+    font-size: 2rem; 
+}
+
+/* Increase font size for markdown output */
+.rise-enabled .jp-OutputArea pre {
+    font-size: 2rem; /* Adjust this value for your desired output text size */
+}
