@@ -177,22 +177,36 @@ class VariationalAutoencoder(nn.Module):
 ### Criterions ###
 ##################
 class VAELoss(nn.Module):
-    def __init__(self, beta = 1.0):
-        """
-        reduction: 'sum' or 'mean'
-        beta: weight on the KL divergence term (beta-VAE variant)
-        """
+    """
+    Loss function for a Variational Autoencoder (VAE).
+
+    Args:
+        beta (float): weight for KL divergence (β-VAE)
+        reduction (str): 'mean' or 'sum'
+    """
+    def __init__(self, beta=1.0, reduction='sum'):
         super().__init__()
         self.beta = beta
+        self.reduction = reduction
 
-    def forward(self,prediction,x,mu,logvar):
-        # Reconstruction loss
-        loss1 = F.mse_loss(prediction, x, reduction="sum")
+    def reconstruction_loss(self, recon_x, x):
+        return F.mse_loss(recon_x, x, reduction=self.reduction)
 
-        # KL divergence
-        loss2 = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    def kl_divergence(self, mu, logvar):
+        # KL Divergence: D_KL(N(mu, σ) || N(0, I))
+        # = -0.5 * sum(1 + log(σ^2) - μ^2 - σ^2)
+        kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
-        # Total loss
-        loss = loss1 + self.beta * loss2
+        if self.reduction == 'mean':
+            kl = kl.mean()
+        else:
+            kl = kl.sum()
 
-        return loss / x.size(0)
+        return kl
+
+    def forward(self, recon_x, x, mu, logvar):
+        recon = self.reconstruction_loss(recon_x, x)
+        kl = self.kl_divergence(mu, logvar)
+        loss = recon + self.beta * kl
+        return loss, recon, kl
+
