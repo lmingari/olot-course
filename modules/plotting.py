@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import cartopy.crs as crs
 import cartopy.feature as cfeature
 
-
 def refresh_if_needed(method):
     """Re-display the figure if the map already existed before this call.
 
@@ -23,7 +22,7 @@ def refresh_if_needed(method):
     return wrapper
 
 
-class FALL3DPlotter:
+class Plotter:
 
     def __init__(self, data=None):
         self.data = None
@@ -37,8 +36,8 @@ class FALL3DPlotter:
 
     def set_data(self, data):
         self.data = data
-        x1, x2 = data.lon.minimum, data.lon.maximum
-        y1, y2 = data.lat.minimum, data.lat.maximum
+        x1, x2 = data.lon.min(), data.lon.max()
+        y1, y2 = data.lat.min(), data.lat.max()
         self.extent = [x1, x2, y1, y2]
 
         # new data means a fresh start
@@ -161,3 +160,33 @@ class FALL3DPlotter:
             raise RuntimeError("No plot has been created yet.")
 
         self.fig.savefig(filename, bbox_inches="tight", **kwargs)
+
+class DecisionBoundariesPlotter(Plotter):
+
+    @refresh_if_needed
+    def contour(self, **kwargs):
+        if self.data is None:
+            raise RuntimeError("No data set. Call set_data() before contour().")
+
+        if self.ax is None:
+            self._create_map()
+
+        cs = self.data.plot.contourf(
+            ax=self.ax,
+            transform=crs.PlateCarree(),
+            levels=[-0.5, 0.5, 1.5, 2.5],
+            vmin=0,
+            vmax=2,
+            alpha=0.5,
+            **kwargs,
+        )
+
+        cbar = self.fig.colorbar(
+            cs,
+            orientation="horizontal",
+            shrink=0.4,
+        )
+        cbar.set_ticks([0, 1, 2])
+        cbar.set_ticklabels(["Low", "Moderate", "High"])
+
+        return self

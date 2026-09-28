@@ -77,5 +77,6 @@ class Trainer(ABC):
                     f"train loss: {train_loss:.4f} | "
                     f"val loss: {val_loss:.4f}"
                 )
+        print("Done!")
     
         return pd.DataFrame(history)
