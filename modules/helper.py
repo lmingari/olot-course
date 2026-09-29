@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from urllib.request import urlretrieve
 import warnings
 
-
 def download_file(url: str, folder: str | Path = "data") -> Path:
     """Download a file and optionally verify its SHA-256 checksum."""
 
@@ -37,3 +36,48 @@ def download_file(url: str, folder: str | Path = "data") -> Path:
         raise RuntimeError(f"Checksum verification failed: {filepath}")
 
     return filepath
+
+def get_decision_regions(model, transform):
+    import numpy as np
+    import xarray as xr
+    import torch
+    # Define the grid
+    lat_min, lat_max = 28.4, 28.9
+    lon_min, lon_max = -18.1, -17.65
+    n_lat, n_lon = 220, 220
+
+    lats = np.linspace(lat_min, lat_max, n_lat)
+    lons = np.linspace(lon_min, lon_max, n_lon)
+
+    lat_grid, lon_grid = np.meshgrid(
+        lats, lons, indexing="ij"
+    )
+
+    # Prepare input coordinates
+    X = np.column_stack([
+        lat_grid.ravel(),
+        lon_grid.ravel(),
+    ])
+
+    # Apply the same standardisation used for training
+    X = transform(torch.from_numpy(X).float())
+
+    # Predict impact class
+    model.eval()
+    with torch.no_grad():
+        logits = model(X)
+        impact = logits.argmax(dim=1)
+
+    # Restore grid shape
+    impact = impact.numpy().reshape(n_lat, n_lon)
+
+    # Return as DataArray
+    return xr.DataArray(
+        impact,
+        dims=("lat", "lon"),
+        coords={
+            "lat": lats,
+            "lon": lons,
+        },
+        name="impact",
+    )

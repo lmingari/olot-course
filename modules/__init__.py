@@ -1,2 +1,3 @@
-from .helper import download_file
-from .plotting import FALL3DPlotter, plot_decision_regions
+from .helper import download_file, get_decision_regions
+from .plotting import MapPlotter, DataPlotter
+from .training import Trainer

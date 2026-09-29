@@ -5,16 +5,17 @@ import pandas as pd
 class Trainer(ABC):
     """Base class for training PyTorch models.
 
-    Subclasses must implement ``get_loss()``. The trainer handles the
+    Subclasses must implement ``get_batch_results()``. The trainer handles the
     training and validation loops.
 
     Example
     -------
     >>> class MyTrainer(Trainer):
-    ...     def get_loss(self, batch):
+    ...     def get_batch_results(self, batch):
     ...         x, y = batch
     ...         prediction = self.model(x)
-    ...         return self.criterion(prediction, y)
+    ...         loss = self.criterion(prediction, y)
+    ...         return {'loss': loss}
     ...
     >>> trainer = MyTrainer(model, criterion, optimizer)
     >>> history = trainer.fit(train_loader, val_loader, epochs=20)
@@ -25,58 +26,74 @@ class Trainer(ABC):
         self.optimizer = optimizer
 
     @abstractmethod
-    def get_loss(self, batch):
-        """Compute the loss for a batch."""
+    def get_batch_results(self, batch):
+        """Return loss and metrics for a batch."""
         ...
 
     def train_epoch(self, dataloader):
         self.model.train()
 
-        total_loss = 0.0
+        totals = {}
 
         for batch in dataloader:
             self.optimizer.zero_grad()
 
-            loss = self.get_loss(batch)
+            results = self.get_batch_results(batch)
 
-            loss.backward()
+            results["loss"].backward()
             self.optimizer.step()
 
-            total_loss += loss.item()
+            for name, value in results.items():
+                value = value.item()
+                totals[name] = totals.get(name, 0) + value
 
-        return total_loss / len(dataloader)
-
+        return {
+            name: value / len(dataloader)
+            for name, value in totals.items()
+        }
+        
     @torch.no_grad()
     def evaluate_epoch(self, dataloader):
         self.model.eval()
 
-        total_loss = 0.0
+        totals = {}
 
         for batch in dataloader:
-            loss = self.get_loss(batch)
-            total_loss += loss.item()
+            results = self.get_batch_results(batch)
 
-        return total_loss / len(dataloader)
+            for name, value in results.items():
+                value = value.item()
+                totals[name] = totals.get(name, 0) + value
+
+        return {
+            name: value / len(dataloader)
+            for name, value in totals.items()
+        }
+
+    def _print_log(self, results):
+        print(
+            f"Epoch {results['epoch']:4d} | "
+            f"train loss: {results['train_loss']:.4f} | "
+            f"val loss: {results['val_loss']:.4f}"
+        )
 
     def fit(self, train_loader, val_loader, epochs, log_every=100):
         history = []
     
         for epoch in range(epochs):
-            train_loss = self.train_epoch(train_loader)
-            val_loss = self.evaluate_epoch(val_loader)
+            train = self.train_epoch(train_loader)
+            val   = self.evaluate_epoch(val_loader)
     
-            history.append({
+            results = {
                 "epoch": epoch + 1,
-                "train_loss": train_loss,
-                "val_loss": val_loss,
-            })
+                **{f"train_{k}": v for k, v in train.items()},
+                **{f"val_{k}": v for k, v in val.items()},
+            }
+            history.append(results)
     
             if (epoch + 1) % log_every == 0 or epoch == 0:
-                print(
-                    f"Epoch {epoch + 1:4d} | "
-                    f"train loss: {train_loss:.4f} | "
-                    f"val loss: {val_loss:.4f}"
-                )
+                self._print_log(results)
+                
         print("Done!")
     
         return pd.DataFrame(history)
