@@ -95,10 +95,19 @@ class MapPlotter:
         display(self.fig)
 
 class DataPlotter(MapPlotter):
-
+    contourf_defaults = {
+        "cmap": plt.cm.RdYlBu_r,
+        "extend": "max",
+    }
+    pcolor_defaults = {
+        "cmap": plt.cm.RdYlBu_r,
+        "shading": "auto",
+    }
+    
     def __init__(self, data=None):
         super().__init__()
         self.data = None
+        self.cbar = None
 
         if data is not None:
             self.set_data(data)
@@ -124,10 +133,7 @@ class DataPlotter(MapPlotter):
         if self.ax is None:
             self.map()
 
-        options = {
-            "cmap": plt.cm.RdYlBu_r,
-            "extend": "max",
-        } | kwargs
+        options = self.contourf_defaults | kwargs
 
         self.data.plot.contourf(
             ax=self.ax,
@@ -162,13 +168,7 @@ class DataPlotter(MapPlotter):
         if self.ax is None:
             self.map()
 
-        cmap = ListedColormap(["lightgreen", "moccasin", "lightcoral"])
-    
-        options = {
-            "cmap": cmap,
-            "shading": "auto",
-            "alpha": 0.5,
-        } | kwargs
+        options = self.pcolor_defaults | kwargs
     
         mesh = self.ax.pcolormesh(
             self.data.lon,
@@ -178,13 +178,26 @@ class DataPlotter(MapPlotter):
             **options,
         )
 
-        cbar = self.fig.colorbar(
+        self.cbar = self.fig.colorbar(
             mesh,
             orientation="horizontal",
             shrink=0.4,
+            title = da.long_name,
         )
     
-        cbar.set_ticks([0, 1, 2])
-        cbar.set_ticklabels(["Low", "Moderate", "High"])
-    
+        self._post_pcolor()
         return self
+
+    def _post_pcolor(self):
+        """Hook: called after pcolormesh draws. Override in subclasses."""
+
+class DecisionBoundariesPlotter(DataPlotter):
+    pcolor_defaults = {
+        "cmap": ListedColormap(["lightgreen", "moccasin", "lightcoral"]),
+        "shading": "auto",
+        "alpha": 0.5,
+    }
+    def _post_pcolor(self):
+        if self.cbar is not None:
+            self.cbar.set_ticks([0, 1, 2])
+            self.cbar.set_ticklabels(["Low", "Moderate", "High"])

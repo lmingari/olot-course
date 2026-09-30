@@ -97,3 +97,10 @@ class Trainer(ABC):
         print("Done!")
     
         return pd.DataFrame(history)
+
+class SupervisedTrainer(Trainer):
+    def get_batch_results(self, batch):
+        x, y = batch
+        prediction = self.model(x)
+        loss = self.criterion(prediction, y)
+        return {'loss': loss}        

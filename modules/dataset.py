@@ -28,6 +28,17 @@ class MinMaxScale:
     def invert(self, x):
         return x * (self.max - self.min) + self.min
 
+class LogTransform:
+    def __init__(self, factor=1000.0, scale=1.0):
+        self.factor = factor
+        self.scale = scale
+
+    def __call__(self, x):
+        return np.log1p(x * self.factor) / self.scale
+
+    def invert(self, x):
+        return np.expm1(x * self.scale) / self.factor
+
 ################
 ### Datasets ###
 ################
@@ -52,6 +63,32 @@ class SupervisedDataset(Dataset):
             x = self.transform(x)
 
         return x, self.y[idx]
+
+class SuperResolutionDataset:
+    def __init__(self, da, 
+                 scale_factor=(4, 4),
+                 transform=None):         
+        lat_factor, lon_factor = scale_factor 
+        self.hr = da.values
+        self.lr = da.coarsen(
+            lat=lat_factor,
+            lon=lon_factor
+        ).mean().values
+
+        self.transform = transform
+
+    def __len__(self):
+        return self.hr.shape[0]
+
+    def __getitem__(self, index):
+        x = self.lr[index][None, ...]
+        y = self.hr[index][None, ...]
+
+        if self.transform:
+            x = self.transform(x)
+            y = self.transform(y)
+
+        return x, y
 
 ###############
 ### helpers ###
