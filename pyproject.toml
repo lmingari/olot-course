@@ -16,7 +16,7 @@ include = ["modules*"]
 # Dependencies for Data Analysis
 data = [
     "pandas",
-    "numpy"
+    "numpy",
     "matplotlib",
 ]
 
