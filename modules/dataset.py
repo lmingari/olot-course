@@ -29,7 +29,7 @@ class MinMaxScale:
         return x * (self.max - self.min) + self.min
 
 class LogTransform:
-    def __init__(self, factor=1000.0, scale=1.0):
+    def __init__(self, factor=1.0, scale=1.0):
         self.factor = factor
         self.scale = scale
 

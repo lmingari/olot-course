@@ -17,6 +17,7 @@ include = ["modules*"]
 data = [
     "pandas",
     "numpy"
+    "matplotlib",
 ]
 
 # Dependencies for Machine Learning / Deep Learning
@@ -27,7 +28,6 @@ ml = [
 
 # Dependencies for Maps
 maps = [
-    "matplotlib",
     "cartopy",
     "xarray",
     "netCDF4"

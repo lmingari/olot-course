@@ -1,8 +1,29 @@
+import shutil
+import warnings
 from hashlib import sha256
 from pathlib import Path
-from urllib.parse import urlparse
-from urllib.request import urlretrieve
-import warnings
+from urllib.parse import unquote, urlparse
+from urllib.request import urlopen
+
+
+def _filename_from_response(response, url: str) -> str:
+    """Get the filename from Content-Disposition, falling back to the URL path."""
+    # Parses both filename="x" and RFC 5987 filename*=UTF-8''x forms
+    name = response.headers.get_filename()
+
+    if not name:
+        # Final URL after redirects, then the original URL
+        for candidate in (response.geturl(), url):
+            name = Path(unquote(urlparse(candidate).path)).name
+            if name:
+                break
+
+    # Strip any directory components (protects against "../../x" names)
+    name = Path(name or "").name
+    if not name:
+        raise ValueError(f"Could not determine a filename for {url}")
+    return name
+
 
 def download_file(url: str, folder: str | Path = "data") -> Path:
     """Download a file and optionally verify its SHA-256 checksum."""
@@ -10,13 +31,18 @@ def download_file(url: str, folder: str | Path = "data") -> Path:
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
 
-    filename = Path(urlparse(url).path).name
-    filepath = folder / filename
-    checksum_file = folder / f"{filename}.sha256"
+    with urlopen(url) as response:
+        filename = _filename_from_response(response, url)
+        filepath = folder / filename
 
-    if not filepath.exists():
-        print(f"Downloading {filename}...")
-        urlretrieve(url, filepath)
+        if not filepath.exists():
+            print(f"Downloading {filename}...")
+            partial = filepath.with_name(filename + ".part")
+            with partial.open("wb") as out:
+                shutil.copyfileobj(response, out)
+            partial.replace(filepath)  # avoid leaving a half-downloaded file
+
+    checksum_file = folder / f"{filename}.sha256"
 
     if not checksum_file.exists():
         warnings.warn(

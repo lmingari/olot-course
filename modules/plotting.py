@@ -22,7 +22,6 @@ def refresh_if_needed(method):
         return result
     return wrapper
 
-
 class MapPlotter:
 
     def __init__(self, extent=None):
@@ -30,13 +29,21 @@ class MapPlotter:
         self.fig = None
         self.ax = None
 
+    def clean(self):
+        """Close the current figure and reset the plot state."""
+        if self.fig is not None:
+            plt.close(self.fig)    # harmless if already closed
+        self.fig = None
+        self.ax = None
+        return self
+    
     def map(self):
         self.fig, self.ax = plt.subplots(
-            subplot_kw={"projection": crs.PlateCarree()}
+            subplot_kw={"projection": self._get_projection()}
         )
 
         if self.extent is not None:
-            self.ax.set_extent(self.extent)
+            self.ax.set_extent(self.extent, crs=crs.PlateCarree())
 
         self.ax.add_feature(
             cfeature.LAND,
@@ -90,6 +97,17 @@ class MapPlotter:
 
         self.fig.savefig(filename, bbox_inches="tight", **kwargs)
 
+    def _crosses_antimeridian(self):
+        if self.extent is None:
+            return False
+        x1, x2 = self.extent[:2]
+        return x1 < 180 < x2 or x1 < -180 < x2
+
+    def _get_projection(self):
+        if self._crosses_antimeridian():
+            return crs.PlateCarree(central_longitude=180)
+        return crs.PlateCarree()
+
     def _refresh(self):
         """Re-display the figure, needed when modifying an ax created in a previous cell."""
         display(self.fig)
@@ -98,6 +116,7 @@ class DataPlotter(MapPlotter):
     contourf_defaults = {
         "cmap": plt.cm.RdYlBu_r,
         "extend": "max",
+        "cbar_kwargs": {"shrink": 0.6},
     }
     pcolor_defaults = {
         "cmap": plt.cm.RdYlBu_r,
@@ -112,17 +131,19 @@ class DataPlotter(MapPlotter):
         if data is not None:
             self.set_data(data)
 
+    def clean(self):
+        super().clean()
+        self.cbar = None
+        return self
+
     def set_data(self, data):
         self.data = data
 
-        x1, x2 = data.lon.min(), data.lon.max()
-        y1, y2 = data.lat.min(), data.lat.max()
+        x1, x2 = data.lon.min().item(), data.lon.max().item()
+        y1, y2 = data.lat.min().item(), data.lat.max().item()
         self.extent = [x1, x2, y1, y2]
 
-        # New data means a fresh start
-        self.fig = None
-        self.ax = None
-
+        self.clean()
         return self
 
     @refresh_if_needed
@@ -181,8 +202,7 @@ class DataPlotter(MapPlotter):
         self.cbar = self.fig.colorbar(
             mesh,
             orientation="horizontal",
-            shrink=0.4,
-            title = da.long_name,
+            shrink=0.4
         )
     
         self._post_pcolor()

@@ -77,8 +77,11 @@ class Trainer(ABC):
             f"val loss: {results['val_loss']:.4f}"
         )
 
-    def fit(self, train_loader, val_loader, epochs, log_every=100):
+    def fit(self, train_loader, val_loader, epochs):
+        """ Implement a generic training loop """
         history = []
+
+        log_every = max(1, epochs // 10)
     
         for epoch in range(epochs):
             train = self.train_epoch(train_loader)
