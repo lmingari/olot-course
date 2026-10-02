@@ -8,23 +8,31 @@ import cartopy.feature as cfeature
 def redraw_map(method):
     """Ensure the map exists, clean old artists, run the method, then refresh."""
     @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, *args, display=True, **kwargs):
         map_existed = self.ax is not None
         if not map_existed:
             self.map()
         self.clean()
         result = method(self, *args, **kwargs)
-        if map_existed:
+        if map_existed and display:
             self._refresh()
         return result
     return wrapper
 
 class MapPlotter:
 
+    marker_defaults = {
+        "marker": "^",
+        "color": "red",
+        "s": 20,
+        "transform": crs.PlateCarree(),
+        "zorder": 10,
+        "alpha": 0.4,
+    }
+
     def __init__(self, extent=None):
         self.fig = None
         self.ax  = None
-        self.auto_refresh = True
         self._extent = extent
 
     @property
@@ -71,14 +79,7 @@ class MapPlotter:
         if self.ax is None:
             self.map()
 
-        options = {
-            "marker": "^",
-            "color": "red",
-            "s": 20,
-            "transform": crs.PlateCarree(),
-            "zorder": 10,
-            "alpha": 0.5,
-        } | kwargs
+        options = self.marker_defaults | kwargs
 
         self.ax.scatter(lon, lat, **options)
 
@@ -111,8 +112,7 @@ class MapPlotter:
 
     def _refresh(self):
         """Re-display the figure."""
-        if self.auto_refresh:
-            display(self.fig)
+        display(self.fig)
 
 class DataPlotter(MapPlotter):
     
