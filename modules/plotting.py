@@ -5,17 +5,14 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 import cartopy.crs as crs
 import cartopy.feature as cfeature
 
-def refresh_if_needed(method):
-    """Re-display the figure if the map already existed before this call.
-
-    Wrap any plotter method that mutates self.ax with this. If self.ax was
-    None (first call, map not created yet), the normal Jupyter inline-backend
-    auto-display handles rendering. If self.ax already existed (a later-cell
-    modification of a previously shown figure), this forces a re-display.
-    """
+def redraw_map(method):
+    """Ensure the map exists, clean old artists, run the method, then refresh."""
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         map_existed = self.ax is not None
+        if not map_existed:
+            self.map()
+        self.clean()
         result = method(self, *args, **kwargs)
         if map_existed:
             self._refresh()
@@ -25,18 +22,22 @@ def refresh_if_needed(method):
 class MapPlotter:
 
     def __init__(self, extent=None):
-        self.extent = extent
         self.fig = None
-        self.ax = None
+        self.ax  = None
+        self.auto_refresh = True
+        self._extent = extent
 
-    def clean(self):
-        """Close the current figure and reset the plot state."""
-        if self.fig is not None:
-            plt.close(self.fig)    # harmless if already closed
-        self.fig = None
-        self.ax = None
-        return self
+    @property
+    def extent(self):
+        return self._extent
     
+    @extent.setter
+    def extent(self, value):
+        if value == self._extent: return
+        self._extent = value
+        if self._extent is not None and self.ax is not None:
+            self.ax.set_extent(value, crs=crs.PlateCarree())
+            
     def map(self):
         self.fig, self.ax = plt.subplots(
             subplot_kw={"projection": self._get_projection()}
@@ -109,15 +110,17 @@ class MapPlotter:
         return crs.PlateCarree()
 
     def _refresh(self):
-        """Re-display the figure, needed when modifying an ax created in a previous cell."""
-        display(self.fig)
+        """Re-display the figure."""
+        if self.auto_refresh:
+            display(self.fig)
 
 class DataPlotter(MapPlotter):
+    
     contourf_defaults = {
         "cmap": plt.cm.RdYlBu_r,
         "extend": "max",
-        "cbar_kwargs": {"shrink": 0.6},
     }
+    
     pcolor_defaults = {
         "cmap": plt.cm.RdYlBu_r,
         "shading": "auto",
@@ -127,13 +130,18 @@ class DataPlotter(MapPlotter):
         super().__init__()
         self.data = None
         self.cbar = None
+        self.cs   = None
 
         if data is not None:
             self.set_data(data)
 
     def clean(self):
-        super().clean()
-        self.cbar = None
+        if self.cbar is not None:
+            self.cbar.remove()
+            self.cbar = None
+        if self.cs is not None:
+            self.cs.remove()
+            self.cs = None
         return self
 
     def set_data(self, data):
@@ -143,33 +151,32 @@ class DataPlotter(MapPlotter):
         y1, y2 = data.lat.min().item(), data.lat.max().item()
         self.extent = [x1, x2, y1, y2]
 
-        self.clean()
         return self
 
-    @refresh_if_needed
+    @redraw_map
     def contourf(self, **kwargs):
         if self.data is None:
             raise RuntimeError("No data set. Call set_data() before contourf().")
 
-        if self.ax is None:
-            self.map()
-
         options = self.contourf_defaults | kwargs
 
-        self.data.plot.contourf(
+        self.cs = self.data.plot.contourf(
             ax=self.ax,
             transform=crs.PlateCarree(),
+            add_colorbar=False,
             **options,
+        )
+        self.cbar = self.fig.colorbar(
+            self.cs, 
+            ax=self.ax,
+            shrink = 0.6,
         )
         return self
 
-    @refresh_if_needed
+    @redraw_map
     def contour(self, **kwargs):
         if self.data is None:
             raise RuntimeError("No data set. Call set_data() before contour().")
-
-        if self.ax is None:
-            self.map()
 
         cs = self.data.plot.contour(
             ax=self.ax,
@@ -179,15 +186,12 @@ class DataPlotter(MapPlotter):
         self.ax.clabel(cs, inline=True, fontsize=9)
         return self
 
-    @refresh_if_needed
+    @redraw_map
     def pcolormesh(self, **kwargs):
         if self.data is None:
             raise RuntimeError(
                 "No data set. Call set_data() before pcolormesh()."
             )
-    
-        if self.ax is None:
-            self.map()
 
         options = self.pcolor_defaults | kwargs
     
