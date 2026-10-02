@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["modules*"]
+include = ["course*"]
 
 [project.optional-dependencies]
 # Dependencies for Data Analysis
