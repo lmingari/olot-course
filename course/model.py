@@ -236,16 +236,16 @@ class FlowUNet(nn.Module):
         self.encoders = nn.ModuleList()
         in_ch = channels
         for i in range(n_levels):
-            self.encoders.append(ResidualBlock(in_ch, chs[i], t_dim))
+            self.encoders.append(TimeResidualBlock(in_ch, chs[i], t_dim))
             in_ch = chs[i]
 
         # Bottleneck: level n_levels
-        self.bottleneck = ResidualBlock(chs[-2], chs[-1], t_dim)
+        self.bottleneck = TimeResidualBlock(chs[-2], chs[-1], t_dim)
 
         # Decoder: from level n_levels-1 back to 0
         # (input channels = upsampled features from the level below + skip connection)
         self.decoders = nn.ModuleList(
-            [ResidualBlock(chs[i + 1] + chs[i], chs[i], t_dim) for i in reversed(range(n_levels))]
+            [TimeResidualBlock(chs[i + 1] + chs[i], chs[i], t_dim) for i in reversed(range(n_levels))]
         )
 
         # Output: map features back to the data channels
