@@ -206,50 +206,71 @@ class FlowUNet(nn.Module):
     """Time-conditioned UNet that predicts the velocity field v(x_t, t).
 
     Inputs:
-        x: (B, C, H, W)   current sample x_t (H and W must be divisible by 4)
+        x: (B, C, H, W)   current sample x_t
         t: (B,)           time in [0, 1]
     Output:
         v: (B, C, H, W)   predicted velocity (no output activation: it can be negative)
 
-    Architecture (c = base_channels):
-        enc1        (B,  c, H,   W)
-        enc2        (B, 2c, H/2, W/2)     after max-pool
-        bottleneck  (B, 4c, H/4, W/4)     after max-pool
-        dec2        (B, 2c, H/2, W/2)     upsample + concat with enc2
-        dec1        (B,  c, H,   W)       upsample + concat with enc1
-        out         (B,  C, H,   W)       1x1 conv
+    n_levels is the number of downsampling steps (max-pools). H and W must be
+    divisible by 2 ** n_levels. The channels double at each level (c = base_channels):
+
+        level 0         (B,  c,         H,            W)           encoder
+        level 1         (B,  2c,        H/2,          W/2)         encoder
+        ...
+        level n_levels  (B,  2^n_levels * c, H/2^n_levels, W/2^n_levels)   bottleneck
+
+    The decoder goes back up, concatenating the encoder output of each level
+    (skip connection) after upsampling. n_levels=2 is the original model.
     """
 
-    def __init__(self, channels=1, base_channels=32, t_dim=128):
+    def __init__(self, channels=1, base_channels=32, n_levels=2, t_dim=128):
         super().__init__()
-        c = base_channels
+        self.n_levels = n_levels
+        chs = [base_channels * 2**i for i in range(n_levels + 1)]    # channels at each level
 
         self.time_embed = TimeEmbedding(t_dim)
-
-        # Encoder
-        self.enc1 = TimeResidualBlock(channels, c, t_dim)
-        self.enc2 = TimeResidualBlock(c, 2 * c, t_dim)
-        self.bottleneck = TimeResidualBlock(2 * c, 4 * c, t_dim)
         self.pool = nn.MaxPool2d(2)
-
-        # Decoder (input channels = upsampled features + skip connection)
         self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
-        self.dec2 = TimeResidualBlock(4 * c + 2 * c, 2 * c, t_dim)
-        self.dec1 = TimeResidualBlock(2 * c + c, c, t_dim)
+
+        # Encoder: levels 0 .. n_levels-1 (input channels: data, then previous level)
+        self.encoders = nn.ModuleList()
+        in_ch = channels
+        for i in range(n_levels):
+            self.encoders.append(ResidualBlock(in_ch, chs[i], t_dim))
+            in_ch = chs[i]
+
+        # Bottleneck: level n_levels
+        self.bottleneck = ResidualBlock(chs[-2], chs[-1], t_dim)
+
+        # Decoder: from level n_levels-1 back to 0
+        # (input channels = upsampled features from the level below + skip connection)
+        self.decoders = nn.ModuleList(
+            [ResidualBlock(chs[i + 1] + chs[i], chs[i], t_dim) for i in reversed(range(n_levels))]
+        )
 
         # Output: map features back to the data channels
-        self.out = nn.Conv2d(c, channels, kernel_size=1)
+        self.out = nn.Conv2d(chs[0], channels, kernel_size=1)
 
     def forward(self, x, t):
-        t_emb = self.time_embed(t)                                   # (B, t_dim)
+        assert x.shape[-1] % 2**self.n_levels == 0 and x.shape[-2] % 2**self.n_levels == 0, \
+            f"H and W must be divisible by {2**self.n_levels}"
 
-        # Encoder
-        e1 = self.enc1(x, t_emb)                                     # (B,  c, H,   W)
-        e2 = self.enc2(self.pool(e1), t_emb)                         # (B, 2c, H/2, W/2)
-        b = self.bottleneck(self.pool(e2), t_emb)                    # (B, 4c, H/4, W/4)
+        t_emb = self.time_embed(t)                       # (B, t_dim)
 
-        # Decoder with skip connections
-        d2 = self.dec2(torch.cat([self.up(b), e2], dim=1), t_emb)    # (B, 2c, H/2, W/2)
-        d1 = self.dec1(torch.cat([self.up(d2), e1], dim=1), t_emb)   # (B,  c, H,   W)
+        # Encoder: keep the output of each level for the skip connections
+        skips = []
+        h = x
+        for i, enc in enumerate(self.encoders):
+            if i > 0:
+                h = self.pool(h)                         # (B, ., H/2^i, W/2^i)
+            h = enc(h, t_emb)
+            skips.append(h)
 
-        return self.out(d1)                                          # (B, C, H, W)
+        # Bottleneck
+        h = self.bottleneck(self.pool(h), t_emb)         # (B, 2^n * c, H/2^n, W/2^n)
+
+        # Decoder: upsample, concatenate the skip of the same level, convolve
+        for dec, skip in zip(self.decoders, reversed(skips)):
+            h = dec(torch.cat([self.up(h), skip], dim=1), t_emb)
+
+        return self.out(h)                               # (B, C, H, W)
