@@ -6,17 +6,17 @@ import torch.nn as nn
 ##############
 
 class MultiLayerPerceptron(nn.Module):
-    def __init__(self, in_dim, hidden, out_dim):
+    """Plain MLP: (B, in_dim) -> (B, out_dim)."""
+    
+    def __init__(self, in_dim, hidden, out_dim, activation=nn.ReLU):
         super().__init__()
 
         layers = []
         input_dim = in_dim
-
         for hidden_dim in hidden:
             layers.append(nn.Linear(input_dim, hidden_dim))
-            layers.append(nn.ReLU())
+            layers.append(activation())
             input_dim = hidden_dim
-
         layers.append(nn.Linear(input_dim, out_dim))
 
         self.net = nn.Sequential(*layers)
@@ -25,16 +25,34 @@ class MultiLayerPerceptron(nn.Module):
         return self.net(x)
 
 class FourierEmbedding(nn.Module):
+    """Random Fourier features: (B, 1) -> (B, dim).
+
+    Maps a scalar to [sin(f_i * x), cos(f_i * x)] with fixed random frequencies
+    f_i. This lets the network react to small changes of t.
+    """
+    
     def __init__(self, dim=64, scale=10.0):
         super().__init__()
         assert dim % 2 == 0, "dim must be even"
-        n_freqs = dim // 2
-        self.register_buffer("freqs", torch.randn(n_freqs) * scale)
+        self.register_buffer("freqs", torch.randn(dim // 2) * scale)
 
     def forward(self, x):
-        # x: (N, 1) -> (N, dim)
-        proj = x * self.freqs[None, :]   # (N, dim // 2)
-        return torch.cat([proj.sin(), proj.cos()], dim=-1)
+        proj = x * self.freqs[None, :]                         # (B, dim/2)
+        return torch.cat([proj.sin(), proj.cos()], dim=-1)     # (B, dim)
+
+class TimeEmbedding(nn.Module):
+    """Time t: (B,) -> embedding: (B, t_dim)."""
+
+    def __init__(self, t_dim=128, fourier_dim=64):
+        super().__init__()
+        self.fourier = FourierEmbedding(fourier_dim)
+        self.mlp = MultiLayerPerceptron(fourier_dim, [t_dim], t_dim, activation=nn.SiLU)
+        self.act = nn.SiLU()
+
+    def forward(self, t):
+        t = t[:, None]                    # (B,)    -> (B, 1)
+        h = self.fourier(t)               # (B, 1)  -> (B, fourier_dim)
+        return self.act(self.mlp(h))      # (B, fourier_dim) -> (B, t_dim)
 
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -53,27 +71,36 @@ class DoubleConv(nn.Module):
         return self.block(x)
 
 class ResidualBlock(nn.Module):
-    """Two 3x3 convs with a skip connection: out = ReLU(F(x) + shortcut(x))."""
+    """Two 3x3 convs with BatchNorm and a skip connection (no time input).
+
+        h   = ReLU(BN(conv1(x)))
+        h   = BN(conv2(h))
+        out = ReLU(h + shortcut(x))
+
+    Shapes:
+        x:   (B, in_channels,  H, W)
+        out: (B, out_channels, H, W)
+    """
 
     def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-        )
-        # 1x1 conv on the skip path only when channels change, so shapes match.
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.act = nn.ReLU()
+
+        # 1x1 conv on the skip path only when the number of channels changes.
         if in_channels != out_channels:
             self.shortcut = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
         else:
             self.shortcut = nn.Identity()
-        self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        return self.relu(self.block(x) + self.shortcut(x))
-        
+        h = self.act(self.bn1(self.conv1(x)))        # (B, out, H, W)
+        h = self.bn2(self.conv2(h))                  # (B, out, H, W)
+        return self.act(h + self.shortcut(x))        # (B, out, H, W)
+
 class UNet(nn.Module):
     def __init__(self, in_channels=1, out_channels=1, base_channels=32, output_layer=None):
         """
@@ -118,41 +145,6 @@ class UNet(nn.Module):
 
         return self.output_layer(d1)
 
-class SuperResolutionUNetWithPreUpsampling(nn.Module):
-    """Nearest-neighbour upsampling, then a UNet that predicts the missing detail.
-
-        x_up   = nearest_upsample(x)
-        output = ReLU(x_up + UNet(x_up))
-    """
-
-    def __init__(self, channels=1, base_channels=32, scale_factor=(4, 4)):
-        super().__init__()
-        self.upsample = nn.Upsample(scale_factor=scale_factor, mode="nearest")
-        self.unet = UNet(in_channels=channels, out_channels=channels, base_channels=base_channels)
-        self.activation = nn.Softplus()  # keeps the output >= 0
-
-    def forward(self, x):
-        x_up = self.upsample(x)
-        return self.activation(x_up + self.unet(x_up))
-
-class SuperResolutionUNetOLD(UNet):
-    """UNet at low resolution; the output layer does the upsampling.
-
-        x (low-res) -> UNet features -> 1x1 conv -> bilinear upsample -> ReLU
-    """
-
-    def __init__(self, in_channels=1, out_channels=1, base_channels=32, scale_factor=(4, 4)):
-        output_layer = nn.Sequential(
-            nn.Conv2d(base_channels, out_channels, kernel_size=1),
-            nn.Upsample(scale_factor=scale_factor, mode="bilinear", align_corners=False),
-            nn.Softplus(),  # keeps the output >= 0
-        )
-        super().__init__(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            base_channels=base_channels,
-            output_layer=output_layer,
-        )
 
 class SuperResolutionUNet(UNet):
     """UNet at low resolution; the output layer learns the upsampling."""
@@ -171,3 +163,114 @@ class SuperResolutionUNet(UNet):
             base_channels=base_channels,
             output_layer=output_layer,
         )
+
+class TimeResidualBlock(nn.Module):
+    """Two 3x3 convs with a skip connection, conditioned on time.
+
+        h   = SiLU(conv1(x))
+        h   = h + time_bias(t_emb)        <- the only place where t enters
+        h   = SiLU(conv2(h))
+        out = h + shortcut(x)
+
+    Shapes:
+        x:     (B, in_channels,  H, W)
+        t_emb: (B, t_dim)
+        out:   (B, out_channels, H, W)
+    """
+
+    def __init__(self, in_channels, out_channels, t_dim):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.act = nn.SiLU()
+
+        # Linear map: time embedding -> one bias value per output channel.
+        self.time_bias = nn.Linear(t_dim, out_channels)
+
+        # 1x1 conv on the skip path only when the number of channels changes.
+        if in_channels != out_channels:
+            self.shortcut = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+        else:
+            self.shortcut = nn.Identity()
+
+    def forward(self, x, t_emb):
+        h = self.act(self.conv1(x))                  # (B, out, H, W)
+
+        bias = self.time_bias(t_emb)                 # (B, out)
+        h = h + bias[:, :, None, None]               # (B, out, 1, 1) broadcast over H, W
+
+        h = self.act(self.conv2(h))                  # (B, out, H, W)
+        return h + self.shortcut(x)                  # (B, out, H, W)
+
+class FlowUNet(nn.Module):
+    """Time-conditioned UNet that predicts the velocity field v(x_t, t).
+
+    Inputs:
+        x: (B, C, H, W)   current sample x_t
+        t: (B,)           time in [0, 1]
+    Output:
+        v: (B, C, H, W)   predicted velocity (no output activation: it can be negative)
+
+    n_levels is the number of downsampling steps (max-pools). H and W must be
+    divisible by 2 ** n_levels. The channels double at each level (c = base_channels):
+
+        level 0         (B,  c,         H,            W)           encoder
+        level 1         (B,  2c,        H/2,          W/2)         encoder
+        ...
+        level n_levels  (B,  2^n_levels * c, H/2^n_levels, W/2^n_levels)   bottleneck
+
+    The decoder goes back up, concatenating the encoder output of each level
+    (skip connection) after upsampling. n_levels=2 is the original model.
+    """
+
+    def __init__(self, channels=1, base_channels=32, n_levels=2, t_dim=128):
+        super().__init__()
+        self.n_levels = n_levels
+        chs = [base_channels * 2**i for i in range(n_levels + 1)]    # channels at each level
+
+        self.time_embed = TimeEmbedding(t_dim)
+        self.pool = nn.MaxPool2d(2)
+        self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
+
+        # Encoder: levels 0 .. n_levels-1 (input channels: data, then previous level)
+        self.encoders = nn.ModuleList()
+        in_ch = channels
+        for i in range(n_levels):
+            self.encoders.append(TimeResidualBlock(in_ch, chs[i], t_dim))
+            in_ch = chs[i]
+
+        # Bottleneck: level n_levels
+        self.bottleneck = TimeResidualBlock(chs[-2], chs[-1], t_dim)
+
+        # Decoder: from level n_levels-1 back to 0
+        # (input channels = upsampled features from the level below + skip connection)
+        self.decoders = nn.ModuleList(
+            [TimeResidualBlock(chs[i + 1] + chs[i], chs[i], t_dim) for i in reversed(range(n_levels))]
+        )
+
+        # Output: map features back to the data channels
+        self.out = nn.Conv2d(chs[0], channels, kernel_size=1)
+
+    def forward(self, x, t):
+        assert x.shape[-1] % 2**self.n_levels == 0 and x.shape[-2] % 2**self.n_levels == 0, \
+            f"H and W must be divisible by {2**self.n_levels}"
+
+        t_emb = self.time_embed(t)                       # (B, t_dim)
+
+        # Encoder: keep the output of each level for the skip connections
+        skips = []
+        h = x
+        for i, enc in enumerate(self.encoders):
+            if i > 0:
+                h = self.pool(h)                         # (B, ., H/2^i, W/2^i)
+            h = enc(h, t_emb)
+            skips.append(h)
+
+        # Bottleneck
+        h = self.bottleneck(self.pool(h), t_emb)         # (B, 2^n * c, H/2^n, W/2^n)
+
+        # Decoder: upsample, concatenate the skip of the same level, convolve
+        for dec, skip in zip(self.decoders, reversed(skips)):
+            h = dec(torch.cat([self.up(h), skip], dim=1), t_emb)
+
+        return self.out(h)                               # (B, C, H, W)
