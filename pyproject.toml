@@ -23,7 +23,7 @@ data = [
 # Dependencies for Machine Learning / Deep Learning
 ml = [
     "torch",
-    "torchsummary"
+    "torchinfo"
 ]
 
 # Dependencies for Maps
