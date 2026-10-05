@@ -31,6 +31,7 @@ Material para el módulo de *modelización numérica* del [Curso internacional d
 | 2.2 A multilayer perceptron (MLP) for classification | [![Colab][colab-badge]][s22-colab] | [![Kaggle][kaggle-badge]][s22-kaggle] | [![Binder][binder-badge]][s22-binder] |
 | 3.1 Convolutional neural networks (CNN) | [![Colab][colab-badge]][s31-colab] | [![Kaggle][kaggle-badge]][s31-kaggle] | [![Binder][binder-badge]][s31-binder] |
 | 3.2 Super-Resolution with U-Net | [![Colab][colab-badge]][s32-colab] | [![Kaggle][kaggle-badge]][s32-kaggle] | [![Binder][binder-badge]][s32-binder] |
+| 4 Generative AI | [![Colab][colab-badge]][s4-colab] | [![Kaggle][kaggle-badge]][s4-kaggle] | [![Binder][binder-badge]][s4-binder] |
 
 ## Contenido del repositorio
 
@@ -54,6 +55,9 @@ Introducción a las redes neuronales convolucionales y a los filtros de convoluc
 
 Reconstrucción de campos simulados de plumas volcánicas de alta resolución a partir de entradas de baja resolución. Se construye un conjunto de datos de simulaciones FALL3D, se define y entrena una U-Net, y se evalúa su capacidad de reconstrucción en datos no vistos.
 
+### 4. Generative AI
+Introducción a los modelos generativos como herramienta para aprender la distribución de un ensamble de simulaciones y generar nuevos campos plausibles. Se presenta la interpretación de la generación como un flujo dinámico y se introduce Flow Matching. La práctica utiliza un modelo preentrenado para transformar muestras de ruido gaussiano en nuevos campos de plumas volcánicas y se comparan los resultados con simulaciones de FALL3D.
+
 ## Ejecución local
 
 ```bash
@@ -65,7 +69,7 @@ pip install pandas numpy matplotlib torch torchsummary xarray netCDF4 jupyter
 jupyter notebook
 ```
 
-Abre el cuaderno que quieras ejecutar desde la interfaz de Jupyter. Los datos necesarios están incluidos en `data/`.
+Abre la `notebook` que quieras ejecutar desde la interfaz de Jupyter. Los datos necesarios están incluidos en `data/`.
 
 [web]: https://espaicrater.com/es/cursovolcanologia/
 [teorica-intro]: https://saco.csic.es/s/82DMHtD9Kt2LAXd
@@ -83,13 +87,16 @@ Abre el cuaderno que quieras ejecutar desde la interfaz de Jupyter. Los datos ne
 [s22-colab]: https://colab.research.google.com/github/lmingari/olot-course/blob/master/2.2-MLP-classification.ipynb
 [s31-colab]: https://colab.research.google.com/github/lmingari/olot-course/blob/master/3.1-CNN-introduction.ipynb
 [s32-colab]: https://colab.research.google.com/github/lmingari/olot-course/blob/master/3.2-CNN-unet.ipynb
+[s4-colab]: https://colab.research.google.com/github/lmingari/olot-course/blob/master/4-Generative-AI.ipynb
 [s1-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/1-FALL3D.ipynb
 [s21-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/2.1-MLP-introduction.ipynb
 [s22-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/2.2-MLP-classification.ipynb
 [s31-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/3.1-CNN-introduction.ipynb
 [s32-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/3.2-CNN-unet.ipynb
+[s4-kaggle]: https://kaggle.com/kernels/welcome?src=https://github.com/lmingari/olot-course/blob/master/4-Generative-AI.ipynb
 [s1-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F1-FALL3D.ipynb
 [s21-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F2.1-MLP-introduction.ipynb
 [s22-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F2.2-MLP-classification.ipynb
 [s31-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F3.1-CNN-introduction.ipynb
 [s32-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F3.2-CNN-unet.ipynb
+[s4-binder]: https://mybinder.org/v2/gh/lmingari/olot-course/master?urlpath=%2Fdoc%2Ftree%2F4-Generative-AI.ipynb
