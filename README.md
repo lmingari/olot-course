@@ -14,7 +14,7 @@ Material para el módulo de *modelización numérica* del [Curso internacional d
 
 ## Teóricas
 
-| Teórica | Enlace |
+| Sesión | Slides |
 | :------ | ------ |
 | Introducción | [![PDF][pdf-icon]][teorica-intro] |
 | 1.1 Modelos numéricos | [![PDF][pdf-icon]][teorica11] |
@@ -24,7 +24,7 @@ Material para el módulo de *modelización numérica* del [Curso internacional d
 
 ## Prácticas
 
-| Práctica | Colab | Kaggle | Binder |
+| Sesión | Colab | Kaggle | Binder |
 | :------- | :---: | :----: | :----: |
 | 1. Exploring a FALL3D output | [![Colab][colab-badge]][s1-colab] | [![Kaggle][kaggle-badge]][s1-kaggle] | [![Binder][binder-badge]][s1-binder] |
 | 2.1 Training a Neural Network with PyTorch | [![Colab][colab-badge]][s21-colab] | [![Kaggle][kaggle-badge]][s21-kaggle] | [![Binder][binder-badge]][s21-binder] |
