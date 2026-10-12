@@ -70,9 +70,9 @@ jupyter notebook
 Abre la `notebook` que quieras ejecutar desde la interfaz de Jupyter. Los datos necesarios están incluidos en `data/`.
 
 [web]: https://espaicrater.com/es/cursovolcanologia/
-[teorica-intro]: https://saco.csic.es/s/82DMHtD9Kt2LAXd
-[teorica1]: https://saco.csic.es/s/LqKEF3FDsKszWBf
-[teorica2]: https://saco.csic.es/s/qoar9dr3pNqnqS3
+[teorica-intro]: https://saco.csic.es/s/8xcWD8J9DoNmd3X
+[teorica1]: https://saco.csic.es/s/G4iKF6SiHgrPdcK
+[teorica2]: https://saco.csic.es/s/ya2QxwG2jKdw4R5
 [pdf-icon]: figs/PDF_icon.svg
 [colab-launch]: https://img.shields.io/badge/Google%20Colab-Launch-blue.svg
 [colab-badge]: https://colab.research.google.com/assets/colab-badge.svg
