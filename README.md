@@ -17,10 +17,8 @@ Material para el módulo de *modelización numérica* del [Curso internacional d
 | Sesión | Slides |
 | :------ | ------ |
 | Introducción | [![PDF][pdf-icon]][teorica-intro] |
-| 1.1 Modelos numéricos | [![PDF][pdf-icon]][teorica11] |
-| 1.2 *Machine learning* en volcanología | [![PDF][pdf-icon]][teorica12] |
-| 2. El modelo FALL3D | [![PDF][pdf-icon]][teorica2] |
-| 3. Introducción a las redes neuronales | [![PDF][pdf-icon]][teorica3] |
+| 1. Modelos numéricos (FALL3D) | [![PDF][pdf-icon]][teorica1] |
+| 2. Introducción a las redes neuronales | [![PDF][pdf-icon]][teorica2] |
 
 ## Prácticas
 
@@ -73,10 +71,8 @@ Abre la `notebook` que quieras ejecutar desde la interfaz de Jupyter. Los datos 
 
 [web]: https://espaicrater.com/es/cursovolcanologia/
 [teorica-intro]: https://saco.csic.es/s/82DMHtD9Kt2LAXd
-[teorica11]: https://saco.csic.es/s/Kodfn2bnXmWjAY9
-[teorica12]: https://saco.csic.es/s/xY2Cynfw6sztRSe
-[teorica2]: https://saco.csic.es/s/LqKEF3FDsKszWBf
-[teorica3]: https://saco.csic.es/s/qoar9dr3pNqnqS3
+[teorica1]: https://saco.csic.es/s/LqKEF3FDsKszWBf
+[teorica2]: https://saco.csic.es/s/qoar9dr3pNqnqS3
 [pdf-icon]: figs/PDF_icon.svg
 [colab-launch]: https://img.shields.io/badge/Google%20Colab-Launch-blue.svg
 [colab-badge]: https://colab.research.google.com/assets/colab-badge.svg
