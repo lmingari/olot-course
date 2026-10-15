@@ -24,7 +24,7 @@ class MultiLayerPerceptron(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-class FourierEmbedding(nn.Module):
+class FourierFeatures(nn.Module):
     """Random Fourier features: (B, 1) -> (B, dim).
 
     Maps a scalar to [sin(f_i * x), cos(f_i * x)] with fixed random frequencies
@@ -45,7 +45,7 @@ class TimeEmbedding(nn.Module):
 
     def __init__(self, t_dim=128, fourier_dim=64):
         super().__init__()
-        self.fourier = FourierEmbedding(fourier_dim)
+        self.fourier = FourierFeatures(fourier_dim)
         self.mlp = MultiLayerPerceptron(fourier_dim, [t_dim], t_dim, activation=nn.SiLU)
         self.act = nn.SiLU()
 
